@@ -351,6 +351,11 @@ Resources:
                 ClusterToken: !GetAtt KubeadmToken.Token
                 NetworkingProviderUrl: !Sub "https://${QSS3BucketName}.s3.amazonaws.com/${QSS3KeyPrefix}/scripts/${NetworkingProvider}.yaml"
                 Region: !Ref AWS::Region
+                ClusterName:
+                  Fn::If:
+                    - AssociationProvidedCondition
+                    - !Ref ClusterAssociation
+                    - !Ref AWS::StackName
 
           commands:
             # Install the Cloudwatch agent with configuration for the current region and log group name

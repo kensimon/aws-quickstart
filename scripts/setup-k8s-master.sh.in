@@ -55,8 +55,12 @@ aws elb register-instances-with-load-balancer \
 # - Disabling TLS verification (since the hostname is random and not one of the SANs in the server cert)
 # - Omitting the CA data, since it's not allowed when you're disabling TLS verification
 KUBECONFIG_OUTPUT=/home/ubuntu/kubeconfig
-cat /etc/kubernetes/admin.conf | \
-  sed "s#server: https://.*:6443#server: https://{{LoadBalancerDns}}#" \
+cat /etc/kubernetes/admin.conf \
+  | sed \
+  -e 's#server: https://.*:6443#server: https://{{LoadBalancerDns}}#' \
+  -e 's/cluster: kubernetes/cluster: {{ClusterName}}/' \
+  -e 's/name: kubernetes/name: {{ClusterName}}/' \
+  -e 's/@kubernetes/@{{ClusterName}}/' \
   >$KUBECONFIG_OUTPUT
 chown ubuntu:ubuntu $KUBECONFIG_OUTPUT
 chmod 0600 $KUBECONFIG_OUTPUT
