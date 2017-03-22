@@ -14,9 +14,9 @@
 #    limitations under the License.
 
 SOURCE_DIR="$(cd "$(dirname "$0")"; pwd)"
-KUBERNETES_RELEASE="v1.5.5"
-KUBEADM_RELEASE="v1.6.0-alpha.0.2074+a092d8e0f95f52"
-CNI_RELEASE="07a8a28637e97b22eb8dfe710eeae1344f69d16e"
+KUBERNETES_RELEASE="v1.6.0"
+KUBEADM_RELEASE="v1.6.0"
+CNI_RELEASE="0799f5732f2a11b329d9e3d51b9c8f2e3759f2ff"
 
 apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
 echo "deb https://apt.dockerproject.org/repo ubuntu-$(lsb_release -cs) main" > /etc/apt/sources.list.d/docker.list
@@ -43,7 +43,7 @@ mkdir /tmp/kubebin
   cd /tmp/kubebin
   curl -sf -O "https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_RELEASE}/bin/linux/amd64/kubelet"
   curl -sf -O "https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_RELEASE}/bin/linux/amd64/kubectl"
-  curl -sf -O "https://storage.googleapis.com/kubernetes-release-dev/ci-cross/${KUBEADM_RELEASE}/bin/linux/amd64/kubeadm"
+  curl -sf -O "https://storage.googleapis.com/kubernetes-release/release/${KUBEADM_RELEASE}/bin/linux/amd64/kubeadm"
   curl -sf -O "https://storage.googleapis.com/kubernetes-release/network-plugins/cni-amd64-${CNI_RELEASE}.tar.gz"
 
   install -o root -g root -m 0755 ./kubeadm /usr/bin/kubeadm
@@ -97,7 +97,8 @@ images=(
   "weaveworks/weave-npc:1.9.4"
 )
 
-for i in "${images[@]}" ; do docker pull "${i}" ; done
+# TODO: re-enable once we've sampled the images we downloaded after a successful run
+#for i in "${images[@]}" ; do docker pull "${i}" ; done
 
 ## Save release version, so that we can call `kubeadm init --use-kubernetes-version="$(cat /etc/kubernetes_community_ami_version)` and ensure we get the same version
 echo "${KUBERNETES_RELEASE}" > /etc/kubernetes_community_ami_version

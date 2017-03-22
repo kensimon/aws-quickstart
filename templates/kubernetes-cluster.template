@@ -288,9 +288,9 @@ Mappings:
     us-east-1:
       '64': ami-dcfd40ca
     us-west-1:
-      '64': ami-5d48133d
+      '64': ami-c0df84a0
     us-west-2:
-      '64': ami-0462e864
+      '64': ami-7c22b71c
 
 # Helper Conditions which help find the right values for resources
 Conditions:
@@ -583,7 +583,7 @@ Resources:
             # This joins the existing cluster with kubeadm.  Kubeadm is preinstalled in the AMI this template uses, so
             # all that's left is to join the cluster with the correct token.
             "03-k8s-setup-node":
-              command: !Sub "kubeadm join --token=${KubeadmToken.Token} ${K8sMasterInstance.PrivateIp}"
+              command: !Sub "kubeadm reset && kubeadm join --token=${KubeadmToken.Token} ${K8sMasterInstance.PrivateIp}:6443"
     Properties:
       # Refers to the NodeInstanceProfile resource, which applies the IAM role for the nodes
       # The IAM role allows us to create further AWS resources (like an EBS drive) from the cluster
