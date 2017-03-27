@@ -82,6 +82,8 @@ aws cloudformation create-stack \
 
 To deploy your own changes manually from source, you'll need to upload the contents of the `scripts` and `templates` directories to S3, and configure your CloudFormation to use those S3 URL's.
 
+If you're making changes to things like the Kubernetes version or anything installed in the base AMI, you'll also need to rebuild the AMI with Packer.  See the "Local development" section below for more details.
+
 An example deployment:
 
 ```
@@ -135,3 +137,29 @@ eval $KUBECFG_DL
 export KUBECONFIG=$(pwd)/kubeconfig
 kubectl get nodes
 ```
+
+## Local development
+
+This Quick Start is developed as a set of AWS CloudFormation templates.  This is a brief overview of the files in this repo, for more architecture details see the [Deployment Guide](https://s3.amazonaws.com/quickstart-reference/heptio/latest/doc/heptio-kubernetes-on-the-aws-cloud.pdf)
+
+**The `templates` directory**:
+
+- `kubernetes-cluster.template` sets up the resources that the Kubernetes cluster depends on.  Mainly this is the API load balancer, the master node, the auto-scaling group of kubelet nodes, and the various security groups required to allow them to talk to one another.  The nodes in this template are created from a base AMI, which you can recreate using the scripts in the `packer` directory in this repo.
+- `kubernetes-cluster-with-new-vpc.template` sets up a new VPC with a public and private subnets, and calls out to `kubernetes-cluster.template` as a sub-stack.
+
+**The `scripts` directory**:
+
+This contains files that required by the templates.  This is to avoid inlining a lot of text directly in the template files.  Templates access files from this directory by referencing their S3 URL's, which is why this directory and the `templates` directory both need to be copied into S3 in order to be used.
+
+Some notable files in this directory:
+
+- `setup-k8s-master.sh.in`: This file is run by the master node on first boot as part of its initialization.  It is a [Mustache template](https://mustache.github.io/) file, with template variables that are set by the `kubernetes-cluster.template` template.  Note that this template file does not install the Kubernetes binaries, those are baked into the AMI as part of the scripts in the `packer` directory.
+- `calico.yaml`, `weave.yaml`: These are networking add-ons which are applied with `kubectl` by the master after the Kubernetes cluster is initialized.
+
+**The `packer` directory**:
+
+This directory contains scripts for creating a new base AMI with Kubernetes pre-installed.
+
+- `create-ami.sh`: This file launches packer, configured to launch an instance in `us-east-2` based on a stock Ubuntu 16.04 LTS image, installing Kubernetes, Docker, and various other components needed for the cluster to run.  Packer will output the resulting AMI when complete.
+- `payload/prepare-ami.sh`: This file is the script run by packer on the EC2 instance, and is responsible for actually installing Kubernetes and the various other components.  This is where we update the version of kubernetes baked into the AMI.
+- `deploy-ami.sh`: This is responsible for taking an AMI that was created by Packer and copying it into each region.  It also outputs YAML suitable for copying into `templates/kubernetes-cluster.template` to configure the cluster with the right AMI ID for each region.
